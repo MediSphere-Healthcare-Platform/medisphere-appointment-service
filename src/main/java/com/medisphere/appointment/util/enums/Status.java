@@ -2,5 +2,8 @@ package com.medisphere.appointment.util.enums;
 
 public enum Status {
     active,
-    inactive
+    inactive,
+    PENDING,
+    APPROVED,
+    CANCELLED
 }

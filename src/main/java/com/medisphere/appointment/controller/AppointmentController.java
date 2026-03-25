@@ -1,6 +1,8 @@
 package com.medisphere.appointment.controller;
 
+import com.medisphere.appointment.domain.BookAppointmentRequest;
 import com.medisphere.appointment.domain.GetDoctorsBySpecialityRequest;
+import com.medisphere.appointment.dto.Request.BookAppointmentRequestDTO;
 import com.medisphere.appointment.dto.Request.GetDoctorsBySpecialityRequestDTO;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.util.Utility;
@@ -29,6 +31,12 @@ public class AppointmentController {
     public ResponseEntity<Object> getDoctorsBySpeciality(@Valid @RequestBody GetDoctorsBySpecialityRequestDTO requestDTO) {
         log.info("Received request to get doctors by speciality: {}", Utility.objectToJson(requestDTO));
         return appointmentService.getDoctorsBySpeciality(modelMapper.map(requestDTO, GetDoctorsBySpecialityRequest.class));
+    }
+
+    @PostMapping(value = EndPoint.BOOK_APPOINTMENT)
+    public ResponseEntity<Object> bookAppointment(@Validated @RequestBody BookAppointmentRequestDTO requestDTO) {
+        log.info("Received request to book an appointment: {}", Utility.objectToJson(requestDTO));
+        return appointmentService.bookAppointment(modelMapper.map(requestDTO, BookAppointmentRequest.class));
     }
 
 }

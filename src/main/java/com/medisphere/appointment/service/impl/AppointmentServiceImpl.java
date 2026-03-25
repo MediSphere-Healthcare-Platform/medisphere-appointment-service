@@ -1,9 +1,14 @@
 package com.medisphere.appointment.service.impl;
 
+import com.medisphere.appointment.domain.BookAppointmentRequest;
 import com.medisphere.appointment.domain.GetDoctorsBySpecialityRequest;
+import com.medisphere.appointment.dto.Response.BookAppointmentResponseDTO;
+import com.medisphere.appointment.dto.Response.DoctorDetailDTO;
 import com.medisphere.appointment.dto.Response.GetDoctorsBySpecialityResponseDTO;
 import com.medisphere.appointment.entity.DoctorEntity;
-import com.medisphere.appointment.repository.TestDoctorsDatumRepository;
+import com.medisphere.appointment.entity.MedisphereAppointmentEntity;
+import com.medisphere.appointment.repository.AppointmentRepository;
+import com.medisphere.appointment.repository.DoctorRepository;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.service.ResponseGenerator;
 import com.medisphere.appointment.util.MessageConstant;
@@ -11,33 +16,47 @@ import com.medisphere.appointment.util.ResponseCode;
 import com.medisphere.appointment.util.enums.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Log4j2
 public class AppointmentServiceImpl implements AppointmentService {
 
-    private final TestDoctorsDatumRepository testDoctorsDatumRepository;
+    private final DoctorRepository doctorRepository;
     private final ResponseGenerator responseGenerator;
+    private final AppointmentRepository appointmentRepository;
+    private final ModelMapper modelMapper;
 
+    @Override
     public ResponseEntity<Object> getDoctorsBySpeciality(GetDoctorsBySpecialityRequest request) {
         try {
             log.debug("Get Doctors By Speciality Called.");
 
-            List<DoctorEntity> doc = testDoctorsDatumRepository.findTestDoctorsDatumByStatusAndSpecialty(Status.active.name(), request.getSpeciality());
-            log.debug("Doctors Retrieved: {}", doc.size());
-            if (doc.isEmpty()) {
-                log.debug("No Doctors For The Given Speciality");
+            List<DoctorEntity> docEntities = doctorRepository.findTestDoctorsDatumByStatusAndSpecialty(Status.active.name(), request.getSpeciality());
+            log.debug("Doctors Retrieved: {}", docEntities.size());
+
+            if (docEntities.isEmpty()) {
+                log.warn("No Doctors For The Given Speciality: {}", request.getSpeciality());
                 return responseGenerator.generateResponse(ResponseCode.DOCTORS_NOT_FOUND, MessageConstant.DOCTORS_NOT_FOUND, null);
             }
 
+            // Map Entity to DTO (to avoid exposing sensitive data like NIC and Licence)
+            List<DoctorDetailDTO> doctorDetails = docEntities.stream()
+                    .map(entity -> modelMapper.map(entity, DoctorDetailDTO.class))
+                    .collect(Collectors.toList());
+
             GetDoctorsBySpecialityResponseDTO getDoctorsBySpecialityResponseDTO = GetDoctorsBySpecialityResponseDTO.builder()
                     .speciality(request.getSpeciality())
-                    .data(doc)
+                    .data(doctorDetails)
                     .build();
 
             log.debug("Doctors Retrieval Success.");
@@ -49,7 +68,78 @@ public class AppointmentServiceImpl implements AppointmentService {
         }
     }
 
+    @Override
+    @Transactional
+    public ResponseEntity<Object> bookAppointment(BookAppointmentRequest request) {
+        try {
+            log.debug("Book Appointment Called.");
 
+            //TODO: check patient's existence
 
+            // Validate Appointment Date (Must be today or in the future)
+            if (request.getAppointmentDate().isBefore(LocalDate.now())) {
+                log.warn("Booking failed: Date {} is in the past.", request.getAppointmentDate());
+                return responseGenerator.generateResponse(ResponseCode.PAST_DATE_ERROR, MessageConstant.PAST_DATE_ERROR, null);
+            }
 
+            // Validate Doctor Existence and Status
+            DoctorEntity doctorEntity = doctorRepository.findDoctorByIdAndSpecialty(request.getDoctorId(), request.getSpecialty());
+            if (doctorEntity == null) {
+                log.warn("Booking failed: Doctor ID {} not found for specialty {}.", request.getDoctorId(), request.getSpecialty());
+                return responseGenerator.generateResponse(ResponseCode.DOCTORS_NOT_FOUND, MessageConstant.DOCTORS_NOT_FOUND, null);
+            }
+
+            if (!Status.active.name().equalsIgnoreCase(doctorEntity.getStatus())) {
+                log.warn("Booking failed: Doctor ID {} is not active: {}", request.getDoctorId(), doctorEntity.getStatus());
+                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_ACTIVE, MessageConstant.DOCTOR_NOT_ACTIVE, null);
+            }
+
+            // Check for Duplicate Booking (Same patient, doctor, date, and time)
+            if (appointmentRepository.findByPatientIdAndDoctorAndAppointmentDateAndAppointmentTime(
+                    request.getPatientId(), request.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime()).isPresent()) {
+                log.warn("Booking failed: Duplicate entry found for Patient {}, Doctor {} at {} on {}.",
+                        request.getPatientId(), request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
+                return responseGenerator.generateResponse(ResponseCode.DUPLICATE_BOOKING, MessageConstant.DUPLICATE_BOOKING, null);
+            }
+
+            // Check if doctor is already booked by ANYONE (at that time)
+            List<String> activeStatuses = List.of(Status.PENDING.name(), Status.APPROVED.name());
+            if (appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
+                    request.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime(), activeStatuses)) {
+                log.warn("Booking failed: Doctor ID {} already has a booking at {} on {}.",
+                        request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
+                return responseGenerator.generateResponse(ResponseCode.DOCTOR_ALREADY_BOOKED, MessageConstant.DOCTOR_ALREADY_BOOKED, null);
+            }
+
+            // Create and Save Appointment
+            String bookReferenceID = generateReference();
+
+            MedisphereAppointmentEntity medisphereAppointmentEntity = new MedisphereAppointmentEntity();
+            medisphereAppointmentEntity.setPatientId(request.getPatientId());
+            medisphereAppointmentEntity.setDoctor(request.getDoctorId());
+            medisphereAppointmentEntity.setAppointmentDate(request.getAppointmentDate());
+            medisphereAppointmentEntity.setAppointmentTime(request.getAppointmentTime());
+            medisphereAppointmentEntity.setStatus(Status.PENDING.name());
+            medisphereAppointmentEntity.setReason(request.getReason());
+            medisphereAppointmentEntity.setBookReferenceId(bookReferenceID);
+
+            appointmentRepository.save(medisphereAppointmentEntity);
+            log.debug("Book Appointment Created Successfully. Reference ID: {}", bookReferenceID);
+
+            BookAppointmentResponseDTO bookAppointmentResponseDTO = BookAppointmentResponseDTO.builder()
+                    .status(medisphereAppointmentEntity.getStatus())
+                    .bookReferenceID(bookReferenceID)
+                    .build();
+
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, bookAppointmentResponseDTO);
+
+        } catch (Exception e) {
+            log.error("Error Occurred during booking: ", e);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+        }
+    }
+
+    private String generateReference() {
+        return "MEDSP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+    }
 }

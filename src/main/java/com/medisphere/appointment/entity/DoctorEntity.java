@@ -10,6 +10,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Getter
 @Setter
@@ -52,11 +53,11 @@ public class DoctorEntity {
 
     @CreationTimestamp
     @Column(name = "create_date")
-    private Instant createDate;
+    private LocalDateTime createDate;
 
     @UpdateTimestamp
     @Column(name = "modified_date")
-    private Instant modifiedDate;
+    private LocalDateTime modifiedDate;
 
 
 }

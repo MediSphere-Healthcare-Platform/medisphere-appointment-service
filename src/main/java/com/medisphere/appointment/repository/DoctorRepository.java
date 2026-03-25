@@ -7,8 +7,10 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface TestDoctorsDatumRepository extends JpaRepository<DoctorEntity, String> {
+public interface DoctorRepository extends JpaRepository<DoctorEntity, String> {
 
         List<DoctorEntity> findTestDoctorsDatumByStatusAndSpecialty(String status, String specialty);
+
+        DoctorEntity findDoctorByIdAndSpecialty(Integer doctorId, String specialty);
 
 }
