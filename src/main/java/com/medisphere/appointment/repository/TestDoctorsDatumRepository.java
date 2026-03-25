@@ -1,14 +1,14 @@
 package com.medisphere.appointment.repository;
 
-import com.medisphere.appointment.entity.TestDoctorsDatum;
+import com.medisphere.appointment.entity.DoctorEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
 @Repository
-public interface TestDoctorsDatumRepository extends JpaRepository<TestDoctorsDatum, String> {
+public interface TestDoctorsDatumRepository extends JpaRepository<DoctorEntity, String> {
 
-        List<TestDoctorsDatum> findTestDoctorsDatumBySpecialty(String specialty);
+        List<DoctorEntity> findTestDoctorsDatumByStatusAndSpecialty(String status, String specialty);
 
 }

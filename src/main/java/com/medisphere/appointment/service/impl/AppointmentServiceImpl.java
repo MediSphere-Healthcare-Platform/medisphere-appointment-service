@@ -2,12 +2,13 @@ package com.medisphere.appointment.service.impl;
 
 import com.medisphere.appointment.domain.GetDoctorsBySpecialityRequest;
 import com.medisphere.appointment.dto.Response.GetDoctorsBySpecialityResponseDTO;
-import com.medisphere.appointment.entity.TestDoctorsDatum;
+import com.medisphere.appointment.entity.DoctorEntity;
 import com.medisphere.appointment.repository.TestDoctorsDatumRepository;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.service.ResponseGenerator;
 import com.medisphere.appointment.util.MessageConstant;
 import com.medisphere.appointment.util.ResponseCode;
+import com.medisphere.appointment.util.enums.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
@@ -27,7 +28,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Get Doctors By Speciality Called.");
 
-            List<TestDoctorsDatum> doc = testDoctorsDatumRepository.findTestDoctorsDatumBySpecialty(request.getSpeciality());
+            List<DoctorEntity> doc = testDoctorsDatumRepository.findTestDoctorsDatumByStatusAndSpecialty(Status.active.name(), request.getSpeciality());
             log.debug("Doctors Retrieved: {}", doc.size());
             if (doc.isEmpty()) {
                 log.debug("No Doctors For The Given Speciality");
