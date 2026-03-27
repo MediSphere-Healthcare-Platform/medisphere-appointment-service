@@ -8,4 +8,5 @@ public class ResponseCode {
     public static final String DOCTOR_NOT_ACTIVE = "0004";
     public static final String DUPLICATE_BOOKING = "0005";
     public static final String DOCTOR_ALREADY_BOOKED = "0006";
+    public static final String PATIENTS_NOT_FOUND = "0007";
 }

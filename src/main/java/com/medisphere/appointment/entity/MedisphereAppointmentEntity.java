@@ -7,6 +7,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -19,15 +21,17 @@ public class MedisphereAppointmentEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "id", nullable = false)
-    private Integer id;
+    private int id;
 
     @NotNull
-    @Column(name = "patient_id", nullable = false)
-    private Integer patientId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "patient", nullable = false)
+    private MedispherePatientEntity patient;
 
     @NotNull
-    @Column(name = "doctor_id", nullable = false)
-    private Integer doctor;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "doctor", nullable = false)
+    private DoctorEntity doctor;
 
     @Column(name = "appointment_date")
     private LocalDate appointmentDate;

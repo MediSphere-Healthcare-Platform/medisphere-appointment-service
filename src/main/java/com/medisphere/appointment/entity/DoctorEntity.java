@@ -3,6 +3,7 @@ package com.medisphere.appointment.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.ColumnDefault;
@@ -11,16 +12,22 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "doctor_table")
 public class DoctorEntity {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "dr_id", nullable = false)
-    private Integer id;
+    @Column(name = "id", nullable = false)
+    private int id;
+
+    @NotNull
+    @Column(name = "doctor_id", nullable = false, length = Integer.MAX_VALUE)
+    private String doctorId;
 
     @Size(max = 200)
     @NotNull
@@ -58,6 +65,5 @@ public class DoctorEntity {
     @UpdateTimestamp
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
-
 
 }

@@ -9,4 +9,5 @@ public class MessageConstant {
     public static final String DUPLICATE_BOOKING = "An appointment already exists for this time slot.";
     public static final String DOCTOR_NOT_ACTIVE = "The selected doctor is currently not available for bookings.";
     public static final String DOCTOR_ALREADY_BOOKED = "The selected doctor is already booked for this time slot.";
+    public static final String PATIENTS_NOT_FOUND = "No patient found for the given speciality.";
 }

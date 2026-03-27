@@ -7,8 +7,10 @@ import com.medisphere.appointment.dto.Response.DoctorDetailDTO;
 import com.medisphere.appointment.dto.Response.GetDoctorsBySpecialityResponseDTO;
 import com.medisphere.appointment.entity.DoctorEntity;
 import com.medisphere.appointment.entity.MedisphereAppointmentEntity;
+import com.medisphere.appointment.entity.MedispherePatientEntity;
 import com.medisphere.appointment.repository.AppointmentRepository;
 import com.medisphere.appointment.repository.DoctorRepository;
+import com.medisphere.appointment.repository.PatientRepository;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.service.ResponseGenerator;
 import com.medisphere.appointment.util.MessageConstant;
@@ -32,6 +34,7 @@ import java.util.stream.Collectors;
 public class AppointmentServiceImpl implements AppointmentService {
 
     private final DoctorRepository doctorRepository;
+    private final PatientRepository patientRepository;
     private final ResponseGenerator responseGenerator;
     private final AppointmentRepository appointmentRepository;
     private final ModelMapper modelMapper;
@@ -74,7 +77,12 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Book Appointment Called.");
 
-            //TODO: check patient's existence
+            // Validate Active Patient Existence
+            MedispherePatientEntity patientEntity = patientRepository.findByIdAndStatus(request.getPatientId(), Status.active.name());
+            if (patientEntity == null) {
+                log.warn("Patient not found for ID: {}.", request.getPatientId());
+                return responseGenerator.generateResponse(ResponseCode.PATIENTS_NOT_FOUND, MessageConstant.PATIENTS_NOT_FOUND, null);
+            }
 
             // Validate Appointment Date (Must be today or in the future)
             if (request.getAppointmentDate().isBefore(LocalDate.now())) {
@@ -83,7 +91,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
 
             // Validate Doctor Existence and Status
-            DoctorEntity doctorEntity = doctorRepository.findDoctorByIdAndSpecialty(request.getDoctorId(), request.getSpecialty());
+            DoctorEntity doctorEntity = doctorRepository.findDoctorByDoctorIdAndSpecialty(request.getDoctorId(), request.getSpecialty());
             if (doctorEntity == null) {
                 log.warn("Booking failed: Doctor ID {} not found for specialty {}.", request.getDoctorId(), request.getSpecialty());
                 return responseGenerator.generateResponse(ResponseCode.DOCTORS_NOT_FOUND, MessageConstant.DOCTORS_NOT_FOUND, null);
@@ -95,7 +103,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
 
             // Check for Duplicate Booking (Same patient, doctor, date, and time)
-            if (appointmentRepository.findByPatientIdAndDoctorAndAppointmentDateAndAppointmentTime(
+            if (appointmentRepository.findByPatientAndDoctorAndAppointmentDateAndAppointmentTime(
                     request.getPatientId(), request.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime()).isPresent()) {
                 log.warn("Booking failed: Duplicate entry found for Patient {}, Doctor {} at {} on {}.",
                         request.getPatientId(), request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
@@ -115,8 +123,8 @@ public class AppointmentServiceImpl implements AppointmentService {
             String bookReferenceID = generateReference();
 
             MedisphereAppointmentEntity medisphereAppointmentEntity = new MedisphereAppointmentEntity();
-            medisphereAppointmentEntity.setPatientId(request.getPatientId());
-            medisphereAppointmentEntity.setDoctor(request.getDoctorId());
+            medisphereAppointmentEntity.setPatient(patientEntity);
+            medisphereAppointmentEntity.setDoctor(doctorEntity);
             medisphereAppointmentEntity.setAppointmentDate(request.getAppointmentDate());
             medisphereAppointmentEntity.setAppointmentTime(request.getAppointmentTime());
             medisphereAppointmentEntity.setStatus(Status.PENDING.name());
@@ -131,6 +139,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .bookReferenceID(bookReferenceID)
                     .build();
 
+            log.debug("Booking process success.");
             return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, bookAppointmentResponseDTO);
 
         } catch (Exception e) {

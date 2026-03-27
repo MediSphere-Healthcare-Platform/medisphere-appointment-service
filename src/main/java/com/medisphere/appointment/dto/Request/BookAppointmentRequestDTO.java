@@ -16,11 +16,11 @@ public class BookAppointmentRequestDTO {
 
     @NotNull(message = "Patient ID cannot be null")
     @NotEmpty(message = "Patient ID cannot be empty")
-    private Integer patientId;
+    private String patientId;
 
     @NotNull(message = "Doctor ID cannot be null")
     @NotEmpty(message = "Speciality cannot be empty")
-    private Integer doctorId;
+    private String doctorId;
 
     @NotNull(message = "Speciality cannot be null")
     @NotNull(message = "Speciality cannot be empty")

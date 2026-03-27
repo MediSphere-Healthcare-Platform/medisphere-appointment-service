@@ -1,6 +1,8 @@
 package com.medisphere.appointment.filter;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import jakarta.servlet.*;
 import jakarta.servlet.http.HttpServletRequest;
@@ -28,7 +30,7 @@ public class RequestFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
 
-        // Skip non-API requests
+        // Skip non-API requestso
         if (request.getRequestURI().contains("actuator") || request.getRequestURI().contains("favicon")) {
             chain.doFilter(req, res);
             return;
@@ -52,7 +54,9 @@ public class RequestFilter implements Filter {
     }
 
     private void traceRequest(HttpServletRequest request) throws IOException {
-        log.info("---------------------> REQUEST BEGIN: {} {}", request.getMethod(), request.getRequestURI());
+        log.info("==================== REQUEST BEGIN ====================");
+        log.info("HTTP Method: {}", request.getMethod());
+        log.info("Request URI: {}", request.getRequestURI());
         log.debug("Headers: {}", getHeaders(request));
 
         if ("POST".equalsIgnoreCase(request.getMethod()) || "PUT".equalsIgnoreCase(request.getMethod())) {
@@ -63,24 +67,28 @@ public class RequestFilter implements Filter {
                     sb.append(line);
                 }
             }
-            log.info("Body: {}", sb.toString());
+            log.info("Request Body: {}", sb.toString());
         }
-        log.info("--------------------> REQUEST END");
+        log.info("==================== REQUEST END ====================");
     }
 
     private void traceResponse(BufferedServletResponseWrapper response) {
-        log.info("<-------------------- RESPONSE BEGIN: {}", response.getStatus());
+        log.info("==================== RESPONSE BEGIN ====================");
+        log.info("HTTP Status: {}", response.getStatus());
         String data = response.getResponseData();
+        Gson prettyGson = new GsonBuilder().setPrettyPrinting().create();
+
         if (data != null && !data.trim().isEmpty()) {
             try {
-                log.info("Body: {}", gson.toJson(JsonParser.parseString(data)));
+                JsonElement jsonElement = JsonParser.parseString(data);
+                log.info("Response Body:\n{}", prettyGson.toJson(jsonElement));
             } catch (Exception e) {
-                log.info("Body: {}", data);
+                log.info("Response Body: {}", data);
             }
         } else {
-            log.info("Body: [empty]");
+            log.info("Response Body: [empty]");
         }
-        log.info("<-------------------- RESPONSE END");
+        log.info("==================== RESPONSE END ====================");
     }
 
     private String getHeaders(HttpServletRequest request) {

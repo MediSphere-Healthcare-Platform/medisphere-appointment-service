@@ -15,8 +15,8 @@ import java.time.LocalTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class BookAppointmentRequest {
-    private Integer patientId;
-    private Integer doctorId;
+    private String patientId;
+    private String doctorId;
     private String specialty;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;

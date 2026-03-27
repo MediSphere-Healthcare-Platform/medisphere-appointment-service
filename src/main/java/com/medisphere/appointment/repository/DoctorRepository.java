@@ -11,6 +11,6 @@ public interface DoctorRepository extends JpaRepository<DoctorEntity, String> {
 
         List<DoctorEntity> findTestDoctorsDatumByStatusAndSpecialty(String status, String specialty);
 
-        DoctorEntity findDoctorByIdAndSpecialty(Integer doctorId, String specialty);
+        DoctorEntity findDoctorByDoctorIdAndSpecialty(String doctorId, String specialty);
 
 }
