@@ -27,11 +27,9 @@ public class BookAppointmentRequestDTO {
     private String specialty;
 
     @NotNull(message = "Appointment date cannot be null")
-    @NotEmpty(message = "Appointment date cannot be empty")
     private LocalDate appointmentDate;
 
     @NotNull(message = "Appointment time cannot be null")
-    @NotEmpty(message = "Appointment time cannot be empty")
     private LocalTime appointmentTime;
 
     @NotNull(message = "Reason cannot be null")
