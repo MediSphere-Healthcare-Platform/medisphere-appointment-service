@@ -1,10 +1,27 @@
 package com.medisphere.appointment.util;
 
-import com.google.gson.Gson;
+import com.google.gson.*;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 
 public class Utility {
-    public static String objectToJson(Object object) {
+    private static final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(LocalDate.class,
+                    (JsonSerializer<LocalDate>) (src, typeOfSrc,
+                            context) -> new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_DATE)))
+            .registerTypeAdapter(LocalDate.class,
+                    (JsonDeserializer<LocalDate>) (json, typeOfT, context) -> LocalDate.parse(json.getAsString(),
+                            DateTimeFormatter.ISO_LOCAL_DATE))
+            .registerTypeAdapter(LocalTime.class,
+                    (JsonSerializer<LocalTime>) (src, typeOfSrc,
+                            context) -> new JsonPrimitive(src.format(DateTimeFormatter.ISO_LOCAL_TIME)))
+            .registerTypeAdapter(LocalTime.class,
+                    (JsonDeserializer<LocalTime>) (json, typeOfT, context) -> LocalTime.parse(json.getAsString(),
+                            DateTimeFormatter.ISO_LOCAL_TIME))
+            .create();
 
-        return new Gson().toJson(object);
+    public static String objectToJson(Object object) {
+        return gson.toJson(object);
     }
 }

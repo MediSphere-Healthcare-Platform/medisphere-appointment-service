@@ -20,7 +20,24 @@ public class MedisphereAppointmentServiceApplication {
 
 	@Bean
 	public Gson gson() {
-		return new Gson();
+		return new com.google.gson.GsonBuilder()
+				.registerTypeAdapter(java.time.LocalDate.class,
+						(com.google.gson.JsonSerializer<java.time.LocalDate>) (src, typeOfSrc,
+								context) -> new com.google.gson.JsonPrimitive(
+										src.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE)))
+				.registerTypeAdapter(java.time.LocalDate.class,
+						(com.google.gson.JsonDeserializer<java.time.LocalDate>) (json, typeOfT,
+								context) -> java.time.LocalDate.parse(json.getAsString(),
+										java.time.format.DateTimeFormatter.ISO_LOCAL_DATE))
+				.registerTypeAdapter(java.time.LocalTime.class,
+						(com.google.gson.JsonSerializer<java.time.LocalTime>) (src, typeOfSrc,
+								context) -> new com.google.gson.JsonPrimitive(
+										src.format(java.time.format.DateTimeFormatter.ISO_LOCAL_TIME)))
+				.registerTypeAdapter(java.time.LocalTime.class,
+						(com.google.gson.JsonDeserializer<java.time.LocalTime>) (json, typeOfT,
+								context) -> java.time.LocalTime.parse(json.getAsString(),
+										java.time.format.DateTimeFormatter.ISO_LOCAL_TIME))
+				.create();
 	}
 
 }
