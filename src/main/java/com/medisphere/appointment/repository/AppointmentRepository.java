@@ -14,24 +14,23 @@ import java.util.Optional;
 @Repository
 public interface AppointmentRepository extends JpaRepository<MedisphereAppointmentEntity, Integer> {
 
-
     @Query("SELECT a FROM MedisphereAppointmentEntity a " +
-            "WHERE a.patient.id = :patientId AND a.doctor.id = :doctorId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime")
+            "WHERE a.patient.id = :patId AND a.doctor.id = :docId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime")
     Optional<MedisphereAppointmentEntity> findByPatientAndDoctorAndAppointmentDateAndAppointmentTime(
-            @Param("patientId") String patientId,
-            @Param("doctorId") String doctorId,
+            @Param("patId") Integer patId,
+            @Param("docId") Integer docId,
             @Param("appointmentDate") LocalDate appointmentDate,
             @Param("appointmentTime") LocalTime appointmentTime
     );
 
-    @Query("SELECT a FROM MedisphereAppointmentEntity a " +
-            "WHERE a.doctor.id = :doctorId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime AND a.status IN :statuses")
+
+    @Query("SELECT (COUNT(a) > 0) FROM MedisphereAppointmentEntity a " +
+            "WHERE a.doctor.id = :docId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime AND a.status IN :statuses")
     boolean existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
-            @Param("doctorId") String doctorId,
+            @Param("docId") Integer docId,
             @Param("appointmentDate") LocalDate appointmentDate,
             @Param("appointmentTime") LocalTime appointmentTime,
             @Param("statuses") Collection<String> statuses
-
     );
 
 }

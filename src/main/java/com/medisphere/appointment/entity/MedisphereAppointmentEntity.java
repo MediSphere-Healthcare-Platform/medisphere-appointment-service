@@ -6,9 +6,7 @@ import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
-import org.hibernate.annotations.ColumnDefault;
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
+import org.hibernate.annotations.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -45,11 +43,11 @@ public class MedisphereAppointmentEntity {
     @Column(name = "reason", length = 250)
     private String reason;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @CreationTimestamp
     @Column(name = "create_date")
     private LocalDateTime createDate;
 
-    @ColumnDefault("CURRENT_TIMESTAMP")
+    @UpdateTimestamp
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
 

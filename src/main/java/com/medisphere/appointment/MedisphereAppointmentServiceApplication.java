@@ -37,6 +37,10 @@ public class MedisphereAppointmentServiceApplication {
 						(com.google.gson.JsonDeserializer<java.time.LocalTime>) (json, typeOfT,
 								context) -> java.time.LocalTime.parse(json.getAsString(),
 										java.time.format.DateTimeFormatter.ISO_LOCAL_TIME))
+				.registerTypeAdapter(java.util.Optional.class,
+						(com.google.gson.JsonSerializer<java.util.Optional<?>>) (src, typeOfSrc,
+								context) -> src.isPresent() ? context.serialize(src.get())
+										: com.google.gson.JsonNull.INSTANCE)
 				.create();
 	}
 

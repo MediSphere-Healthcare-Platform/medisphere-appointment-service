@@ -44,7 +44,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Get Doctors By Speciality Called.");
 
-            List<DoctorEntity> docEntities = doctorRepository.findTestDoctorsDatumByStatusAndSpecialty(Status.active.name(), request.getSpeciality());
+            List<DoctorEntity> docEntities = doctorRepository.findByStatusAndSpecialty(Status.active.name(), request.getSpeciality());
             log.debug("Doctors Retrieved: {}", docEntities.size());
 
             if (docEntities.isEmpty()) {
@@ -104,7 +104,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             // Check for Duplicate Booking (Same patient, doctor, date, and time)
             if (appointmentRepository.findByPatientAndDoctorAndAppointmentDateAndAppointmentTime(
-                    request.getPatientId(), request.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime()).isPresent()) {
+                    patientEntity.getId(), doctorEntity.getId(), request.getAppointmentDate(), request.getAppointmentTime()).isPresent()) {
                 log.warn("Booking failed: Duplicate entry found for Patient {}, Doctor {} at {} on {}.",
                         request.getPatientId(), request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
                 return responseGenerator.generateResponse(ResponseCode.DUPLICATE_BOOKING, MessageConstant.DUPLICATE_BOOKING, null);
@@ -113,7 +113,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             // Check if doctor is already booked by ANYONE (at that time)
             List<String> activeStatuses = List.of(Status.PENDING.name(), Status.APPROVED.name());
             if (appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
-                    request.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime(), activeStatuses)) {
+                    doctorEntity.getId(), request.getAppointmentDate(), request.getAppointmentTime(), activeStatuses)) {
                 log.warn("Booking failed: Doctor ID {} already has a booking at {} on {}.",
                         request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
                 return responseGenerator.generateResponse(ResponseCode.DOCTOR_ALREADY_BOOKED, MessageConstant.DOCTOR_ALREADY_BOOKED, null);
@@ -121,6 +121,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             // Create and Save Appointment
             String bookReferenceID = generateReference();
+            log.debug("Reference ID Generated: {}", bookReferenceID);
 
             MedisphereAppointmentEntity medisphereAppointmentEntity = new MedisphereAppointmentEntity();
             medisphereAppointmentEntity.setPatient(patientEntity);
@@ -149,6 +150,6 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private String generateReference() {
-        return "MEDSP-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
+        return "MEDSPREF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
 }
