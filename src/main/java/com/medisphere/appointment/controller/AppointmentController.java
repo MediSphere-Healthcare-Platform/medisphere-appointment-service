@@ -1,7 +1,9 @@
 package com.medisphere.appointment.controller;
 
+import com.medisphere.appointment.domain.AppointmentUpdateRequest;
 import com.medisphere.appointment.domain.BookAppointmentRequest;
 import com.medisphere.appointment.domain.GetDoctorsBySpecialityRequest;
+import com.medisphere.appointment.dto.Request.AppointmentUpdateRequestDTO;
 import com.medisphere.appointment.dto.Request.BookAppointmentRequestDTO;
 import com.medisphere.appointment.dto.Request.GetDoctorsBySpecialityRequestDTO;
 import com.medisphere.appointment.service.AppointmentService;
@@ -37,6 +39,12 @@ public class AppointmentController {
     public ResponseEntity<Object> bookAppointment(@Validated @RequestBody BookAppointmentRequestDTO requestDTO) {
         log.info("Received request to book an appointment: {}", Utility.objectToJson(requestDTO));
         return appointmentService.bookAppointment(modelMapper.map(requestDTO, BookAppointmentRequest.class));
+    }
+
+    @PutMapping(value = EndPoint.UPDATE_APPOINTMENT)
+    public ResponseEntity<Object> updateAppointment(@Validated @RequestBody AppointmentUpdateRequestDTO requestDTO) {
+        log.info("Received request to update appointment: {}", Utility.objectToJson(requestDTO));
+        return appointmentService.updateAppointment(modelMapper.map(requestDTO, AppointmentUpdateRequest.class));
     }
 
 }
