@@ -1,8 +1,6 @@
 package com.medisphere.appointment.service;
 
-import com.medisphere.appointment.domain.AppointmentUpdateRequest;
-import com.medisphere.appointment.domain.BookAppointmentRequest;
-import com.medisphere.appointment.domain.GetDoctorsBySpecialityRequest;
+import com.medisphere.appointment.domain.*;
 import org.springframework.http.ResponseEntity;
 
 public interface AppointmentService {
@@ -11,5 +9,9 @@ public interface AppointmentService {
     ResponseEntity<Object> bookAppointment(BookAppointmentRequest request);
 
     ResponseEntity<Object> updateAppointment(AppointmentUpdateRequest request);
+
+    ResponseEntity<Object> cancelAppointment(AppointmentCancelRequest request);
+
+    ResponseEntity<Object> trackAppointmentStatus(AppointmentTrackRequest request);
 
 }

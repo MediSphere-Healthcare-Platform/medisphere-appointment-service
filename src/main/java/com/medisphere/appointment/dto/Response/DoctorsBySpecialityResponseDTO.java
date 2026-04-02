@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class GetDoctorsBySpecialityResponseDTO {
+public class DoctorsBySpecialityResponseDTO {
     private String speciality;
     private Object data;
 }

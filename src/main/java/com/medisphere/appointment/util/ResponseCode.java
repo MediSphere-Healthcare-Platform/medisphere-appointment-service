@@ -11,4 +11,6 @@ public class ResponseCode {
     public static final String PATIENTS_NOT_FOUND = "0007";
     public static final String APPOINTMENT_NOT_FOUND = "0008";
     public static final String APPOINTMENT_ALREADY_APPROVED = "0009";
+    public static final String VALIDATION_ERROR = "0010";
+        public static final String APPOINTMENT_ALREADY_CANCELLED = "0011";
 }

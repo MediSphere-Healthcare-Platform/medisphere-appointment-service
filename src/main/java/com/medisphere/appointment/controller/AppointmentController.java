@@ -1,14 +1,10 @@
 package com.medisphere.appointment.controller;
 
-import com.medisphere.appointment.domain.AppointmentUpdateRequest;
-import com.medisphere.appointment.domain.BookAppointmentRequest;
-import com.medisphere.appointment.domain.GetDoctorsBySpecialityRequest;
-import com.medisphere.appointment.dto.Request.AppointmentUpdateRequestDTO;
-import com.medisphere.appointment.dto.Request.BookAppointmentRequestDTO;
-import com.medisphere.appointment.dto.Request.GetDoctorsBySpecialityRequestDTO;
+import com.medisphere.appointment.domain.*;
+import com.medisphere.appointment.dto.Request.*;
+import com.medisphere.appointment.dto.Response.TrackAppointmentStatusResponseDTO;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.util.Utility;
-import jakarta.validation.Valid;
 import com.medisphere.appointment.util.EndPoint;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -20,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @Log4j2
-@RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE, consumes = MediaType.APPLICATION_JSON_VALUE)
+@RequestMapping(value = "/api/v1", produces = MediaType.APPLICATION_JSON_VALUE)
 @CrossOrigin(origins = "*")
 @RequiredArgsConstructor
 @Validated
@@ -29,22 +25,37 @@ public class AppointmentController {
     public final AppointmentService appointmentService;
     public final ModelMapper modelMapper;
 
-    @PostMapping(value = EndPoint.GET_DOCTORS_BY_SPECIALITY)
-    public ResponseEntity<Object> getDoctorsBySpeciality(@Valid @RequestBody GetDoctorsBySpecialityRequestDTO requestDTO) {
-        log.info("Received request to get doctors by speciality: {}", Utility.objectToJson(requestDTO));
+    @GetMapping(value = EndPoint.DOCTORS_BY_SPECIALITY)
+    public ResponseEntity<Object> getDoctorsBySpeciality(@PathVariable("speciality") String speciality) {
+        log.info("Received request to get doctors by speciality: {}", speciality);
+        DoctorsBySpecialityRequestDTO requestDTO = DoctorsBySpecialityRequestDTO.builder().speciality(speciality).build();
         return appointmentService.getDoctorsBySpeciality(modelMapper.map(requestDTO, GetDoctorsBySpecialityRequest.class));
     }
 
-    @PostMapping(value = EndPoint.BOOK_APPOINTMENT)
+    @PostMapping(value = EndPoint.BOOK_APPOINTMENT, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> bookAppointment(@Validated @RequestBody BookAppointmentRequestDTO requestDTO) {
         log.info("Received request to book an appointment: {}", Utility.objectToJson(requestDTO));
         return appointmentService.bookAppointment(modelMapper.map(requestDTO, BookAppointmentRequest.class));
     }
 
-    @PutMapping(value = EndPoint.UPDATE_APPOINTMENT)
+    @PutMapping(value = EndPoint.UPDATE_APPOINTMENT, consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> updateAppointment(@Validated @RequestBody AppointmentUpdateRequestDTO requestDTO) {
         log.info("Received request to update appointment: {}", Utility.objectToJson(requestDTO));
         return appointmentService.updateAppointment(modelMapper.map(requestDTO, AppointmentUpdateRequest.class));
+    }
+
+    @DeleteMapping(value = EndPoint.CANCEL_APPOINTMENT)
+    public ResponseEntity<Object> cancelAppointment(@PathVariable("appointmentReferenceId") String appointmentReferenceId) {
+        log.info("Received request to cancel appointment: {}", appointmentReferenceId);
+        AppointmentCancelRequestDTO requestDTO = AppointmentCancelRequestDTO.builder().appointmentReferenceId(appointmentReferenceId).build();
+        return appointmentService.cancelAppointment(modelMapper.map(requestDTO, AppointmentCancelRequest.class));
+    }
+
+    @GetMapping(value = EndPoint.TRACK_APPOINTMENT_STATUS)
+    public ResponseEntity<Object> trackAppointmentStatus(@PathVariable("appointmentReferenceId") String appointmentReferenceId) {
+        log.info("Received request to track appointment status: {}", appointmentReferenceId);
+        AppointmentTrackRequestDTO requestDTO = AppointmentTrackRequestDTO.builder().appointmentReferenceId(appointmentReferenceId).build();
+        return appointmentService.trackAppointmentStatus(modelMapper.map(requestDTO, AppointmentTrackRequest.class));
     }
 
 }

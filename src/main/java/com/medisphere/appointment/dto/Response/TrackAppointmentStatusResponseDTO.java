@@ -1,24 +1,23 @@
-package com.medisphere.appointment.domain;
+package com.medisphere.appointment.dto.Response;
 
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import java.time.LocalDate;
 import java.time.LocalTime;
 
 @Data
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-public class AppointmentUpdateRequest {
+public class TrackAppointmentStatusResponseDTO {
 
     private String appointmentReferenceId;
-
+    private String doctorName;
     private LocalDate appointmentDate;
-
     private LocalTime appointmentTime;
-
-    private String reason;
-
-    private String doctorId;
+    private String status;
 
 }

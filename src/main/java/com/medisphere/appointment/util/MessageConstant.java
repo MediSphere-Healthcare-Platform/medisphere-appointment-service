@@ -12,4 +12,6 @@ public class MessageConstant {
     public static final String PATIENTS_NOT_FOUND = "No patient found for the given speciality.";
     public static final String APPOINTMENT_NOT_FOUND = "No appointment found for the given reference ID.";
     public static final String APPOINTMENT_ALREADY_APPROVED = "Appointment already approved.";
+    public static final String VALIDATION_ERROR = "Validation Failed.";
+    public static final String APPOINTMENT_ALREADY_CANCELLED = "Appointment already cancelled.";
 }
