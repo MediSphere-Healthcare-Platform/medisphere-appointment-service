@@ -49,7 +49,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 return responseGenerator.generateResponse(ResponseCode.DOCTORS_NOT_FOUND, MessageConstant.DOCTORS_NOT_FOUND, null);
             }
 
-            // Map Entity to DTO (to avoid exposing sensitive data like NIC and Licence)
+            // Map Entity to DTO (to avoid exposing sensitive data like NIC and License)
             List<DoctorDetailDTO> doctorDetails = docEntities.stream()
                     .map(entity -> modelMapper.map(entity, DoctorDetailDTO.class))
                     .collect(Collectors.toList());
