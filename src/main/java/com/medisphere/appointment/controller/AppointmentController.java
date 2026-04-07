@@ -25,6 +25,12 @@ public class AppointmentController {
     public final AppointmentService appointmentService;
     public final ModelMapper modelMapper;
 
+    @GetMapping(value = EndPoint.GET_ALL_APPOINTMENTS)
+    public ResponseEntity<Object> getAllAppointments() {
+        log.info("Received request to get all appointments");
+        return appointmentService.getAllAppointments();
+    }
+
     @GetMapping(value = EndPoint.DOCTORS_BY_SPECIALITY)
     public ResponseEntity<Object> getDoctorsBySpeciality(@PathVariable("speciality") String speciality) {
         log.info("Received request to get doctors by speciality: {}", speciality);

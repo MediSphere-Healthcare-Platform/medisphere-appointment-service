@@ -2,12 +2,11 @@ package com.medisphere.appointment.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Size;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
-import org.hibernate.annotations.*;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -22,25 +21,27 @@ public class MedisphereAppointmentEntity {
     private int id;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "patient", nullable = false)
-    private MedispherePatientEntity patient;
+    @Column(name = "patient_id", nullable = false)
+    private String patientId;
 
     @NotNull
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "doctor", nullable = false)
-    private DoctorEntity doctor;
+    @Column(name = "doctor_id", nullable = false)
+    private String doctorId;
+
+    @NotNull
+    @Column(name = "ms_user_id", nullable = false)
+    private String msUserId;
 
     @Column(name = "appointment_date")
     private LocalDate appointmentDate;
 
-    @Column(name = "appointment_time", length = 50)
+    @Column(name = "appointment_time")
     private LocalTime appointmentTime;
 
-    @Column(name = "status", length = 50)
+    @Column(name = "status")
     private String status;
 
-    @Column(name = "reason", length = 250)
+    @Column(name = "reason")
     private String reason;
 
     @CreationTimestamp
@@ -51,8 +52,8 @@ public class MedisphereAppointmentEntity {
     @Column(name = "modified_date")
     private LocalDateTime modifiedDate;
 
-    @Column(name = "book_reference_id", length = 50)
-    private String bookReferenceId;
+    @Column(name = "appointment_reference_id")
+    private String appointmentReferenceId;
 
 
 }

@@ -4,6 +4,9 @@ import com.medisphere.appointment.domain.*;
 import org.springframework.http.ResponseEntity;
 
 public interface AppointmentService {
+
+    ResponseEntity<Object> getAllAppointments();
+
     ResponseEntity<Object> getDoctorsBySpeciality(GetDoctorsBySpecialityRequest request);
 
     ResponseEntity<Object> bookAppointment(BookAppointmentRequest request);
