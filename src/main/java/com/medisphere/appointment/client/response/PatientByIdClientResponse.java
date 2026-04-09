@@ -10,12 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class PatientByIdClientResponse {
-    private int id;
-    private String firstName;
-    private String lastName;
-    private String patientId;
-    private String msUserId;
-    private String contactNo;
-    private String status;
-
+    private int code;
+    private String message;
+    private PatientClientResponse data;
 }

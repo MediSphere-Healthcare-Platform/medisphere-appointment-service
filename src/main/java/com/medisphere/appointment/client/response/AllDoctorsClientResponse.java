@@ -12,5 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class AllDoctorsClientResponse {
-    private List<DoctorClientResponse> doctors;
+    private int code;
+    private String message;
+    private List<DoctorClientResponse> data;
 }

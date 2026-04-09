@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 @Data
@@ -12,14 +11,12 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 @NoArgsConstructor
 @Builder
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DoctorClientResponse {
+public class PatientClientResponse {
     private Integer id;
     private String firstName;
     private String lastName;
-    private String doctorId;
+    private String patientId;
     private String msUserId;
-    private String specialty;
-    private String drContactNo;
+    private String contactNo;
     private String status;
-    private String profilePic;
 }

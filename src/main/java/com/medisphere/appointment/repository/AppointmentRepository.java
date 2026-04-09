@@ -40,5 +40,5 @@ public interface AppointmentRepository extends JpaRepository<MedisphereAppointme
             @Param("statuses") Collection<String> statuses
     );
 
-    MedisphereAppointmentEntity findByBookReferenceId(String bookReferenceId);
+    MedisphereAppointmentEntity findByAppointmentReferenceId(String appointmentReferenceId);
 }

@@ -10,13 +10,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class DoctorByIdClientResponse {
-    private int id;
-    private String firstName;
-    private String lastName;
-    private String doctorId;
-    private String msUserId;
-    private String specialty;
-    private String contactNo;
-    private String status;
-
+    private int code;
+    private String message;
+    private DoctorClientResponse data;
 }
