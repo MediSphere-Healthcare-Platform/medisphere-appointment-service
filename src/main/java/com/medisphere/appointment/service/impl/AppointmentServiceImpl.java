@@ -182,6 +182,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             medisphereAppointmentEntity.setAppointmentTime(request.getAppointmentTime());
             medisphereAppointmentEntity.setStatus(Status.PENDING.name());
             medisphereAppointmentEntity.setReason(request.getReason());
+            medisphereAppointmentEntity.setMsUserId(request.getMsUserId());
             medisphereAppointmentEntity.setAppointmentReferenceId(appointmentReferenceID);
 
             appointmentRepository.save(medisphereAppointmentEntity);

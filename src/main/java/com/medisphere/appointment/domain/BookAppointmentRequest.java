@@ -17,6 +17,7 @@ import java.time.LocalTime;
 public class BookAppointmentRequest {
     private String patientId;
     private String doctorId;
+    private String msUserId;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private String reason;

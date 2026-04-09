@@ -34,7 +34,7 @@ public interface AppointmentRepository extends JpaRepository<MedisphereAppointme
     @Query("SELECT (COUNT(a) > 0) FROM MedisphereAppointmentEntity a " +
             "WHERE a.doctorId = :doctorId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime AND a.status IN :statuses")
     boolean existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
-            @Param("docId") String doctorId,
+            @Param("doctorId") String doctorId,
             @Param("appointmentDate") LocalDate appointmentDate,
             @Param("appointmentTime") LocalTime appointmentTime,
             @Param("statuses") Collection<String> statuses
