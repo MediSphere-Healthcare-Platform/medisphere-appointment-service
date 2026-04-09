@@ -22,22 +22,35 @@ public interface AppointmentRepository extends JpaRepository<MedisphereAppointme
     List<AllAppointmentResponseDTO> findAllAppointments();
 
     @Query("SELECT a FROM MedisphereAppointmentEntity a " +
-            "WHERE a.patientId = :patId AND a.doctorId = :docId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime")
+            "WHERE a.patientId = :patientId AND a.doctorId = :doctorId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime")
     Optional<MedisphereAppointmentEntity> findByPatientAndDoctorAndAppointmentDateAndAppointmentTime(
-            @Param("patId") Integer patId,
-            @Param("docId") Integer docId,
+            @Param("patientId") String patientId,
+            @Param("doctorId") String doctorId,
             @Param("appointmentDate") LocalDate appointmentDate,
             @Param("appointmentTime") LocalTime appointmentTime
     );
 
 
     @Query("SELECT (COUNT(a) > 0) FROM MedisphereAppointmentEntity a " +
-            "WHERE a.doctorId = :doctorId AND a.appointmentDate = :appointmentDate AND a.appointmentTime = :appointmentTime AND a.status IN :statuses")
+            "WHERE a.doctorId = :doctorId AND a.appointmentDate = :appointmentDate " +
+            "AND a.appointmentTime = :appointmentTime AND a.status IN :statuses")
     boolean existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
             @Param("doctorId") String doctorId,
             @Param("appointmentDate") LocalDate appointmentDate,
             @Param("appointmentTime") LocalTime appointmentTime,
             @Param("statuses") Collection<String> statuses
+    );
+
+    @Query("SELECT (COUNT(a) > 0) FROM MedisphereAppointmentEntity a " +
+            "WHERE a.doctorId = :doctorId AND a.appointmentDate = :appointmentDate " +
+            "AND a.appointmentTime = :appointmentTime AND a.status IN :statuses " +
+            "AND a.appointmentReferenceId <> :referenceId")
+    boolean existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusInAndAppointmentReferenceIdNot(
+            @Param("doctorId") String doctorId,
+            @Param("appointmentDate") LocalDate appointmentDate,
+            @Param("appointmentTime") LocalTime appointmentTime,
+            @Param("statuses") Collection<String> statuses,
+            @Param("referenceId") String referenceId
     );
 
     MedisphereAppointmentEntity findByAppointmentReferenceId(String appointmentReferenceId);

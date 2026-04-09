@@ -155,8 +155,8 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
 
             // Check for Duplicate Booking (Same patient, doctor, date, and time)
-            if (appointmentRepository.findByPatientAndDoctorAndAppointmentDateAndAppointmentTime(patientEntity.getId(),
-                    doctorEntity.getId(), request.getAppointmentDate(), request.getAppointmentTime()).isPresent()) {
+            if (appointmentRepository.findByPatientAndDoctorAndAppointmentDateAndAppointmentTime(patientEntity.getPatientId(),
+                    doctorEntity.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime()).isPresent()) {
                 log.warn("Booking failed: Duplicate entry found for Patient {}, Doctor {} at {} on {}.",
                         request.getPatientId(), request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
                 return responseGenerator.generateResponse(ResponseCode.DUPLICATE_BOOKING, MessageConstant.DUPLICATE_BOOKING, null);
@@ -227,7 +227,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             boolean isDateTimeChanged = false;
             boolean isDoctorChanged = false;
 
-            if (request.getAppointmentDate() != null) {
+            if (request.getAppointmentDate() != null && !request.getAppointmentDate().equals(medisphereAppointmentEntity.getAppointmentDate())) {
                 if (request.getAppointmentDate().isBefore(LocalDate.now())) {
                     log.warn("Update failed: New date {} is in the past.", request.getAppointmentDate());
                     return responseGenerator.generateResponse(ResponseCode.PAST_DATE_ERROR,
@@ -237,7 +237,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 isDateTimeChanged = true;
             }
 
-            if (request.getAppointmentTime() != null) {
+            if (request.getAppointmentTime() != null && !request.getAppointmentTime().equals(medisphereAppointmentEntity.getAppointmentTime())) {
                 medisphereAppointmentEntity.setAppointmentTime(request.getAppointmentTime());
                 isDateTimeChanged = true;
             }
@@ -246,7 +246,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 medisphereAppointmentEntity.setReason(request.getReason());
             }
 
-            if (request.getDoctorId() != null) {
+            if (request.getDoctorId() != null && !request.getDoctorId().equals(medisphereAppointmentEntity.getDoctorId())) {
                 // Validate Doctor Existence and Status
                 ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient
                         .getDoctorById(request.getDoctorId());
@@ -277,11 +277,12 @@ public class AppointmentServiceImpl implements AppointmentService {
 
                 // Use the updated values from the entity (which are already updated if
                 // provided, or kept from before)
-                if (appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
+                if (appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusInAndAppointmentReferenceIdNot(
                         medisphereAppointmentEntity.getDoctorId(),
                         medisphereAppointmentEntity.getAppointmentDate(),
                         medisphereAppointmentEntity.getAppointmentTime(),
-                        activeStatuses)) {
+                        activeStatuses,
+                        medisphereAppointmentEntity.getAppointmentReferenceId())) {
 
                     log.warn("Update notice: New appointment details for Doctor ID {} at {} on {} have a conflict.",
                             medisphereAppointmentEntity.getDoctorId(),
@@ -335,7 +336,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
 
             medisphereAppointmentEntity.setStatus(Status.CANCELLED.name());
-            appointmentRepository.save(medisphereAppointmentEntity);
+            appointmentRepository.delete(medisphereAppointmentEntity);
 
             log.info("Appointment cancelled successfully: {}", request.getAppointmentReferenceId());
             return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
