@@ -7,5 +7,6 @@ public class EndPoint {
     public static final String UPDATE_APPOINTMENT = "appointments/updateAppointment";
     public static final String CANCEL_APPOINTMENT = "appointments/cancel/{appointmentReferenceId}";
     public static final String TRACK_APPOINTMENT_STATUS = "appointments/trackStatus/{appointmentReferenceId}";
+    public static final String APPOINTMENT_STATUS_CHANGE = "appointments/appointmentStatusChange";
 
 }

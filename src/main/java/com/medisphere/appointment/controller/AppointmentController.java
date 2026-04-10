@@ -64,4 +64,10 @@ public class AppointmentController {
         return appointmentService.trackAppointmentStatus(modelMapper.map(requestDTO, AppointmentTrackRequest.class));
     }
 
+    @PutMapping(value = EndPoint.APPOINTMENT_STATUS_CHANGE, consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> appointmentStatusChange(@Validated @RequestBody AppointmentStatusChangeRequestDTO requestDTO) {
+        log.info("Received request to appointment status change: {}", Utility.objectToJson(requestDTO));
+        return appointmentService.appointmentStatusChange(modelMapper.map(requestDTO, AppointmentStatusChangeRequest.class));
+    }
+
 }

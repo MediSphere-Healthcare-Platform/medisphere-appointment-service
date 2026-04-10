@@ -15,4 +15,6 @@ public class MessageConstant {
     public static final String APPOINTMENT_ALREADY_APPROVED = "Appointment already approved.";
     public static final String VALIDATION_ERROR = "Validation Failed.";
     public static final String APPOINTMENT_ALREADY_CANCELLED = "Appointment already cancelled.";
+    public static final String APPOINTMENT_ALREADY_REJECTED = "Appointment already rejected.";
+    public static final String INVALID_STATUS = "Invalid status.";
 }

@@ -17,4 +17,6 @@ public interface AppointmentService {
 
     ResponseEntity<Object> trackAppointmentStatus(AppointmentTrackRequest request);
 
+    ResponseEntity<Object> appointmentStatusChange(AppointmentStatusChangeRequest request);
+
 }
