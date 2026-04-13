@@ -14,8 +14,8 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AppointmentsByPatientIdResponseDTO {
+public class AppointmentsByDoctorIdResponseDTO {
 
-    private List<MedisphereAppointmentEntity> patientAppointments;
+    private List<MedisphereAppointmentEntity> doctorAppointments;
 
 }

@@ -21,4 +21,6 @@ public interface AppointmentService {
 
     ResponseEntity<Object> getAllAppointmentsByPatientId(AppointmentsByPatientIdRequest request);
 
+    ResponseEntity<Object> getAllAppointmentsByDoctorId(AppointmentsByDoctorIdRequest request);
+
 }

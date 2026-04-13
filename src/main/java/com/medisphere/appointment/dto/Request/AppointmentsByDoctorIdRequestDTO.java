@@ -1,6 +1,5 @@
-package com.medisphere.appointment.dto.Response;
+package com.medisphere.appointment.dto.Request;
 
-import com.medisphere.appointment.entity.MedisphereAppointmentEntity;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -8,14 +7,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class AppointmentsByPatientIdResponseDTO {
+public class AppointmentsByDoctorIdRequestDTO {
 
-    private List<MedisphereAppointmentEntity> patientAppointments;
+    @NotNull(message = "Doctor ID cannot be null")
+    @NotEmpty(message = "Doctor ID cannot be empty")
+    private String doctorId;
 
 }

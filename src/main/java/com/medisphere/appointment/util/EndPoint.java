@@ -8,6 +8,7 @@ public class EndPoint {
     public static final String CANCEL_APPOINTMENT = "appointments/cancel/{appointmentReferenceId}";
     public static final String TRACK_APPOINTMENT_STATUS = "appointments/trackStatus/{appointmentReferenceId}";
     public static final String APPOINTMENT_STATUS_CHANGE = "appointments/appointmentStatusChange";
-    public static final String ALL_APPOINTMENTS_BY_PATIENT_ID = "appointments/allAppointmentsByPatientId";
+    public static final String ALL_APPOINTMENTS_BY_PATIENT_ID = "appointments/allAppointmentsByPatientId/{patientId}";
+    public static final String ALL_APPOINTMENTS_BY_DOCTOR_ID = "appointments/allAppointmentsByDoctorId/{doctorId}";
 
 }

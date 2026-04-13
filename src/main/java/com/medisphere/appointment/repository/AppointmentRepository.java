@@ -54,4 +54,8 @@ public interface AppointmentRepository extends JpaRepository<MedisphereAppointme
     );
 
     MedisphereAppointmentEntity findByAppointmentReferenceId(String appointmentReferenceId);
+
+    List<MedisphereAppointmentEntity> findMedisphereAppointmentEntitiesByPatientId(String patientId);
+
+    List<MedisphereAppointmentEntity> findMedisphereAppointmentEntitiesByDoctorId(String doctorId);
 }

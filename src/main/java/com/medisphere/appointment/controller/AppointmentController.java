@@ -70,11 +70,18 @@ public class AppointmentController {
         return appointmentService.appointmentStatusChange(modelMapper.map(requestDTO, AppointmentStatusChangeRequest.class));
     }
 
-    @GetMapping(value = EndPoint.TRACK_APPOINTMENT_STATUS)
+    @GetMapping(value = EndPoint.ALL_APPOINTMENTS_BY_PATIENT_ID)
     public ResponseEntity<Object> getAllAppointmentsByPatientId(@PathVariable("patientId") String patientId) {
         log.info("Received request to get all appointments by patient id: {}", patientId);
         AppointmentsByPatientIdRequestDTO requestDTO = AppointmentsByPatientIdRequestDTO.builder().patientId(patientId).build();
         return appointmentService.getAllAppointmentsByPatientId(modelMapper.map(requestDTO, AppointmentsByPatientIdRequest.class));
+    }
+
+    @GetMapping(value = EndPoint.ALL_APPOINTMENTS_BY_DOCTOR_ID)
+    public ResponseEntity<Object> getAllAppointmentsByDoctorId(@PathVariable("doctorId") String doctorId) {
+        log.info("Received request to get all appointments by patient id: {}", doctorId);
+        AppointmentsByDoctorIdRequestDTO requestDTO = AppointmentsByDoctorIdRequestDTO.builder().doctorId(doctorId).build();
+        return appointmentService.getAllAppointmentsByDoctorId(modelMapper.map(requestDTO, AppointmentsByDoctorIdRequest.class));
     }
 
 }
