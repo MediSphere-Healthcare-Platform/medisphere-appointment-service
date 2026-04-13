@@ -526,8 +526,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private PatientClientResponse getValidatedPatient(String patientId) {
-        ResponseEntity<PatientByIdClientResponse> patientByIdClientResponse = medispherePatientClient
-                .getPatientById(patientId);
+        ResponseEntity<PatientByIdClientResponse> patientByIdClientResponse = medispherePatientClient.getPatientById(patientId);
         PatientByIdClientResponse patientResponse = patientByIdClientResponse.getBody();
         PatientClientResponse patientEntity = (patientResponse != null) ? patientResponse.getData() : null;
 
@@ -544,8 +543,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     }
 
     private DoctorClientResponse getValidatedDoctor(String doctorId) {
-        ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient
-                .getDoctorById(doctorId);
+        ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient.getDoctorById(doctorId);
         DoctorByIdClientResponse doctorResponse = doctorByIdClientResponse.getBody();
         DoctorClientResponse doctorEntity = (doctorResponse != null) ? doctorResponse.getData() : null;
 
