@@ -500,7 +500,7 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Get all appointments by doctor id Called.");
 
-            // Validate Active Patient Existence
+            // Validate Active Doctor Existence
             getValidatedDoctor(request.getDoctorId());
 
             List<MedisphereAppointmentEntity> doctorAppointments = appointmentRepository.findMedisphereAppointmentEntitiesByDoctorId(request.getDoctorId());

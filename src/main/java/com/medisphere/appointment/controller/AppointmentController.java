@@ -79,7 +79,7 @@ public class AppointmentController {
 
     @GetMapping(value = EndPoint.ALL_APPOINTMENTS_BY_DOCTOR_ID)
     public ResponseEntity<Object> getAllAppointmentsByDoctorId(@PathVariable("doctorId") String doctorId) {
-        log.info("Received request to get all appointments by patient id: {}", doctorId);
+        log.info("Received request to get all appointments by doctor id: {}", doctorId);
         AppointmentsByDoctorIdRequestDTO requestDTO = AppointmentsByDoctorIdRequestDTO.builder().doctorId(doctorId).build();
         return appointmentService.getAllAppointmentsByDoctorId(modelMapper.map(requestDTO, AppointmentsByDoctorIdRequest.class));
     }
