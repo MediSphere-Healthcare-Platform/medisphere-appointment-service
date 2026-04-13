@@ -16,6 +16,7 @@ import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.service.ResponseGenerator;
 import com.medisphere.appointment.util.MessageConstant;
 import com.medisphere.appointment.util.ResponseCode;
+import com.medisphere.appointment.util.Utility;
 import com.medisphere.appointment.util.enums.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -527,6 +528,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private PatientClientResponse getValidatedPatient(String patientId) {
         ResponseEntity<PatientByIdClientResponse> patientByIdClientResponse = medispherePatientClient.getPatientById(patientId);
+        log.debug("Patient service response: {}", Utility.objectToJson(patientByIdClientResponse));
         PatientByIdClientResponse patientResponse = patientByIdClientResponse.getBody();
         PatientClientResponse patientEntity = (patientResponse != null) ? patientResponse.getData() : null;
 
@@ -544,6 +546,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
     private DoctorClientResponse getValidatedDoctor(String doctorId) {
         ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient.getDoctorById(doctorId);
+        log.debug("Doctor service response: {}", Utility.objectToJson(doctorByIdClientResponse));
         DoctorByIdClientResponse doctorResponse = doctorByIdClientResponse.getBody();
         DoctorClientResponse doctorEntity = (doctorResponse != null) ? doctorResponse.getData() : null;
 
