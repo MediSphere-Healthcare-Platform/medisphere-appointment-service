@@ -1,5 +1,6 @@
 package com.medisphere.appointment.advisor;
 
+import com.medisphere.appointment.exception.ServiceException;
 import com.medisphere.appointment.service.ResponseGenerator;
 import com.medisphere.appointment.util.ResponseCode;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,11 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
 
     private final ResponseGenerator responseGenerator;
+
+    @ExceptionHandler(ServiceException.class)
+    public ResponseEntity<Object> handleServiceException(ServiceException ex) {
+        return responseGenerator.generateResponse(ex.getCode(), ex.getDescription(), null);
+    }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Object> handleValidationExceptions(MethodArgumentNotValidException ex) {

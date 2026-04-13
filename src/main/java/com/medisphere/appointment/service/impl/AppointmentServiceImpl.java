@@ -10,6 +10,7 @@ import com.medisphere.appointment.client.response.PatientClientResponse;
 import com.medisphere.appointment.domain.*;
 import com.medisphere.appointment.dto.Response.*;
 import com.medisphere.appointment.entity.MedisphereAppointmentEntity;
+import com.medisphere.appointment.exception.ServiceException;
 import com.medisphere.appointment.repository.AppointmentRepository;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.service.ResponseGenerator;
@@ -19,6 +20,8 @@ import com.medisphere.appointment.util.enums.Status;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.modelmapper.ModelMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,18 +52,15 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             if (allAppointmentResponseDTOList.isEmpty()) {
                 log.warn("No Appointments Found.");
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND,
-                        MessageConstant.APPOINTMENT_NOT_FOUND, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
             }
 
             log.debug("Appointments retrieval success.");
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
-                    MessageConstant.APPOINTMENT_OPERATION_SUCCESS, allAppointmentResponseDTOList);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, allAppointmentResponseDTOList);
 
         } catch (Exception e) {
             log.error("Error Occurred: ", e);
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED,
-                    MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
         }
     }
 
@@ -75,15 +75,13 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.debug("Doctors Retrieved: {}", allDoctorEntities);
             if (allDoctorEntities == null) {
                 log.warn("Get All Doctors failed: Doctors not found.");
-                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND,
-                        MessageConstant.DOCTOR_NOT_FOUND, null);
+                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND, MessageConstant.DOCTOR_NOT_FOUND, null);
             }
 
             // Map Entity to DTO and filter by speciality and active status
             List<DoctorDetailDTO> doctorDetails = java.util.Optional.ofNullable(allDoctorEntities.getData())
                     .orElse(java.util.Collections.emptyList()).stream()
-                    .filter(entity -> Status.active.name().equalsIgnoreCase(entity.getStatus())
-                            && request.getSpeciality().equals(entity.getSpecialty()))
+                    .filter(entity -> Status.active.name().equalsIgnoreCase(entity.getStatus()) && request.getSpeciality().equals(entity.getSpecialty()))
                     .map(entity -> {
                         DoctorDetailDTO dto = modelMapper.map(entity, DoctorDetailDTO.class);
                         dto.setDrName(entity.getFirstName() + " " + entity.getLastName());
@@ -99,13 +97,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .build();
 
             log.debug("Doctors Retrieval Success.");
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
-                    MessageConstant.DOCTORS_RETRIEVAL_SUCCESS, doctorsBySpecialityResponseDTO);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.DOCTORS_RETRIEVAL_SUCCESS, doctorsBySpecialityResponseDTO);
 
         } catch (Exception e) {
             log.error("Error Occurred: ", e);
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED,
-                    MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
         }
     }
 
@@ -120,49 +116,14 @@ public class AppointmentServiceImpl implements AppointmentService {
             // Validate Appointment Date (Must be today or in the future)
             if (request.getAppointmentDate().isBefore(LocalDate.now())) {
                 log.warn("Booking failed: Date {} is in the past.", request.getAppointmentDate());
-                return responseGenerator.generateResponse(ResponseCode.PAST_DATE_ERROR, MessageConstant.PAST_DATE_ERROR,
-                        null);
+                return responseGenerator.generateResponse(ResponseCode.PAST_DATE_ERROR, MessageConstant.PAST_DATE_ERROR, null);
             }
 
             // Validate Active Patient Existence
-            ResponseEntity<PatientByIdClientResponse> patientByIdClientResponse = medispherePatientClient
-                    .getPatientById(request.getPatientId());
-            PatientByIdClientResponse patientResponse = patientByIdClientResponse.getBody();
-            PatientClientResponse patientEntity = (patientResponse != null) ? patientResponse.getData() : null;
-
-            log.debug("Patient Retrieved for ID {}: {}", request.getPatientId(),
-                    patientEntity != null ? "Found" : "Not Found");
-            if (patientEntity == null) {
-                log.warn("Patient not found for ID: {}.", request.getPatientId());
-                return responseGenerator.generateResponse(ResponseCode.PATIENTS_NOT_FOUND,
-                        MessageConstant.PATIENTS_NOT_FOUND, null);
-            }
-            if (!Status.active.name().equalsIgnoreCase(patientEntity.getStatus())) {
-                log.warn("Booking failed: Patient ID {} is not active: {}", request.getPatientId(),
-                        patientEntity.getStatus());
-                return responseGenerator.generateResponse(ResponseCode.PATIENT_NOT_ACTIVE,
-                        MessageConstant.PATIENT_NOT_ACTIVE, null);
-            }
+            PatientClientResponse patientEntity = getValidatedPatient(request.getPatientId());
 
             // Validate Doctor Existence and Status
-            ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient
-                    .getDoctorById(request.getDoctorId());
-            DoctorByIdClientResponse doctorResponse = doctorByIdClientResponse.getBody();
-            DoctorClientResponse doctorEntity = (doctorResponse != null) ? doctorResponse.getData() : null;
-
-            log.debug("Doctor Retrieved for ID {}: {}", request.getDoctorId(),
-                    doctorEntity != null ? "Found" : "Not Found");
-            if (doctorEntity == null) {
-                log.warn("Booking failed: Doctor ID {} not found.", request.getDoctorId());
-                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND,
-                        MessageConstant.DOCTOR_NOT_FOUND, null);
-            }
-            if (!Status.active.name().equalsIgnoreCase(doctorEntity.getStatus())) {
-                log.warn("Booking failed: Doctor ID {} is not active: {}", request.getDoctorId(),
-                        doctorEntity.getStatus());
-                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_ACTIVE,
-                        MessageConstant.DOCTOR_NOT_ACTIVE, null);
-            }
+            DoctorClientResponse doctorEntity = getValidatedDoctor(request.getDoctorId());
 
             // Check for Duplicate Booking (Same patient, doctor, date, and time)
             if (appointmentRepository
@@ -170,21 +131,16 @@ public class AppointmentServiceImpl implements AppointmentService {
                             doctorEntity.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime())
                     .isPresent()) {
                 log.warn("Booking failed: Duplicate entry found for Patient {}, Doctor {} at {} on {}.",
-                        request.getPatientId(), request.getDoctorId(), request.getAppointmentTime(),
-                        request.getAppointmentDate());
-                return responseGenerator.generateResponse(ResponseCode.DUPLICATE_BOOKING,
-                        MessageConstant.DUPLICATE_BOOKING, null);
+                        request.getPatientId(), request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
+                return responseGenerator.generateResponse(ResponseCode.DUPLICATE_BOOKING, MessageConstant.DUPLICATE_BOOKING, null);
             }
 
             // Check if doctor is already booked by ANYONE (at that time)
             List<String> activeStatuses = List.of(Status.PENDING.name(), Status.APPROVED.name());
             if (appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusIn(
-                    doctorEntity.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime(),
-                    activeStatuses)) {
-                log.warn("Booking failed: Doctor ID {} already has a booking at {} on {}.",
-                        request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
-                return responseGenerator.generateResponse(ResponseCode.DOCTOR_ALREADY_BOOKED,
-                        MessageConstant.DOCTOR_ALREADY_BOOKED, null);
+                    doctorEntity.getDoctorId(), request.getAppointmentDate(), request.getAppointmentTime(), activeStatuses)) {
+                log.warn("Booking failed: Doctor ID {} already has a booking at {} on {}.", request.getDoctorId(), request.getAppointmentTime(), request.getAppointmentDate());
+                return responseGenerator.generateResponse(ResponseCode.DOCTOR_ALREADY_BOOKED, MessageConstant.DOCTOR_ALREADY_BOOKED, null);
             }
 
             // Create and Save Appointment
@@ -210,13 +166,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .build();
 
             log.debug("Booking process success.");
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
-                    MessageConstant.APPOINTMENT_OPERATION_SUCCESS, bookAppointmentResponseDTO);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, bookAppointmentResponseDTO);
 
         } catch (Exception e) {
             log.error("Error Occurred during booking: ", e);
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED,
-                    MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
         }
     }
 
@@ -226,38 +180,31 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Appointment Update Method Called");
 
-            MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository
-                    .findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
             if (medisphereAppointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND,
-                        MessageConstant.APPOINTMENT_NOT_FOUND, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
             }
 
             if (medisphereAppointmentEntity.getStatus().equals(Status.APPROVED.name())) {
-                log.warn("Appointment already Approved. Cannot be modified: {}.",
-                        medisphereAppointmentEntity.getStatus());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_APPROVED,
-                        MessageConstant.APPOINTMENT_ALREADY_APPROVED, null);
+                log.warn("Appointment already Approved. Cannot be modified: {}.", medisphereAppointmentEntity.getStatus());
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_APPROVED, MessageConstant.APPOINTMENT_ALREADY_APPROVED, null);
             }
 
             // Update fields if provided in request
             boolean isDateTimeChanged = false;
             boolean isDoctorChanged = false;
 
-            if (request.getAppointmentDate() != null
-                    && !request.getAppointmentDate().equals(medisphereAppointmentEntity.getAppointmentDate())) {
+            if (request.getAppointmentDate() != null && !request.getAppointmentDate().equals(medisphereAppointmentEntity.getAppointmentDate())) {
                 if (request.getAppointmentDate().isBefore(LocalDate.now())) {
                     log.warn("Update failed: New date {} is in the past.", request.getAppointmentDate());
-                    return responseGenerator.generateResponse(ResponseCode.PAST_DATE_ERROR,
-                            MessageConstant.PAST_DATE_ERROR, null);
+                    return responseGenerator.generateResponse(ResponseCode.PAST_DATE_ERROR, MessageConstant.PAST_DATE_ERROR, null);
                 }
                 medisphereAppointmentEntity.setAppointmentDate(request.getAppointmentDate());
                 isDateTimeChanged = true;
             }
 
-            if (request.getAppointmentTime() != null
-                    && !request.getAppointmentTime().equals(medisphereAppointmentEntity.getAppointmentTime())) {
+            if (request.getAppointmentTime() != null && !request.getAppointmentTime().equals(medisphereAppointmentEntity.getAppointmentTime())) {
                 medisphereAppointmentEntity.setAppointmentTime(request.getAppointmentTime());
                 isDateTimeChanged = true;
             }
@@ -266,26 +213,20 @@ public class AppointmentServiceImpl implements AppointmentService {
                 medisphereAppointmentEntity.setReason(request.getReason());
             }
 
-            if (request.getDoctorId() != null
-                    && !request.getDoctorId().equals(medisphereAppointmentEntity.getDoctorId())) {
+            if (request.getDoctorId() != null && !request.getDoctorId().equals(medisphereAppointmentEntity.getDoctorId())) {
                 // Validate Doctor Existence and Status
-                ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient
-                        .getDoctorById(request.getDoctorId());
+                ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient.getDoctorById(request.getDoctorId());
                 DoctorByIdClientResponse doctorResponse = doctorByIdClientResponse.getBody();
                 DoctorClientResponse doctorEntity = (doctorResponse != null) ? doctorResponse.getData() : null;
 
-                log.debug("Doctor Retrieved for ID {}: {}", request.getDoctorId(),
-                        doctorEntity != null ? "Found" : "Not Found");
+                log.debug("Doctor Retrieved for ID {}: {}", request.getDoctorId(), doctorEntity != null ? "Found" : "Not Found");
                 if (doctorEntity == null) {
                     log.warn("Appointment update failed: Doctor ID {} not found.", request.getDoctorId());
-                    return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND,
-                            MessageConstant.DOCTOR_NOT_FOUND, null);
+                    return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND, MessageConstant.DOCTOR_NOT_FOUND, null);
                 }
                 if (!Status.active.name().equalsIgnoreCase(doctorEntity.getStatus())) {
-                    log.warn("Appointment update failed: Doctor ID {} is not active: {}", request.getDoctorId(),
-                            doctorEntity.getStatus());
-                    return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_ACTIVE,
-                            MessageConstant.DOCTOR_NOT_ACTIVE, null);
+                    log.warn("Appointment update failed: Doctor ID {} is not active: {}", request.getDoctorId(), doctorEntity.getStatus());
+                    return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_ACTIVE, MessageConstant.DOCTOR_NOT_ACTIVE, null);
                 }
 
                 medisphereAppointmentEntity.setDoctorId(doctorEntity.getDoctorId());
@@ -298,8 +239,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
                 // Use the updated values from the entity (which are already updated if
                 // provided, or kept from before)
-                if (appointmentRepository
-                        .existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusInAndAppointmentReferenceIdNot(
+                if (appointmentRepository.existsByDoctorAndAppointmentDateAndAppointmentTimeAndStatusInAndAppointmentReferenceIdNot(
                                 medisphereAppointmentEntity.getDoctorId(),
                                 medisphereAppointmentEntity.getAppointmentDate(),
                                 medisphereAppointmentEntity.getAppointmentTime(),
@@ -310,8 +250,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                             medisphereAppointmentEntity.getDoctorId(),
                             medisphereAppointmentEntity.getAppointmentTime(),
                             medisphereAppointmentEntity.getAppointmentDate());
-                    return responseGenerator.generateResponse(ResponseCode.DOCTOR_ALREADY_BOOKED,
-                            MessageConstant.DOCTOR_ALREADY_BOOKED, null);
+                    return responseGenerator.generateResponse(ResponseCode.DOCTOR_ALREADY_BOOKED, MessageConstant.DOCTOR_ALREADY_BOOKED, null);
                 }
             }
 
@@ -343,31 +282,26 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Appointment Cancel Method Called");
 
-            MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository
-                    .findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
             if (medisphereAppointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND,
-                        MessageConstant.APPOINTMENT_NOT_FOUND, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
             }
 
             if (Status.CANCELLED.name().equalsIgnoreCase(medisphereAppointmentEntity.getStatus())) {
                 log.warn("Appointment already cancelled: {}.", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_CANCELLED,
-                        MessageConstant.APPOINTMENT_ALREADY_CANCELLED, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_CANCELLED, MessageConstant.APPOINTMENT_ALREADY_CANCELLED, null);
             }
 
             medisphereAppointmentEntity.setStatus(Status.CANCELLED.name());
             appointmentRepository.delete(medisphereAppointmentEntity);
 
             log.info("Appointment cancelled successfully: {}", request.getAppointmentReferenceId());
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
-                    MessageConstant.APPOINTMENT_OPERATION_SUCCESS, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, null);
 
         } catch (Exception e) {
             log.error("Error occurred during appointment cancellation: ", e);
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED,
-                    MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
         }
     }
 
@@ -376,26 +310,20 @@ public class AppointmentServiceImpl implements AppointmentService {
         try {
             log.debug("Track Appointment Status Called.");
 
-            MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository
-                    .findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
             if (medisphereAppointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND,
-                        MessageConstant.APPOINTMENT_NOT_FOUND, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
             }
 
-            ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient
-                    .getDoctorById(medisphereAppointmentEntity.getDoctorId());
+            ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient.getDoctorById(medisphereAppointmentEntity.getDoctorId());
             DoctorByIdClientResponse doctorResponse = doctorByIdClientResponse.getBody();
             DoctorClientResponse doctorEntity = (doctorResponse != null) ? doctorResponse.getData() : null;
 
-            log.debug("Doctor Retrieved for ID {}: {}", medisphereAppointmentEntity.getDoctorId(),
-                    doctorEntity != null ? "Found" : "Not Found");
+            log.debug("Doctor Retrieved for ID {}: {}", medisphereAppointmentEntity.getDoctorId(), doctorEntity != null ? "Found" : "Not Found");
             if (doctorEntity == null) {
-                log.warn("Appointment update failed: Doctor ID {} not found.",
-                        medisphereAppointmentEntity.getDoctorId());
-                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND,
-                        MessageConstant.DOCTOR_NOT_FOUND, null);
+                log.warn("Appointment update failed: Doctor ID {} not found.", medisphereAppointmentEntity.getDoctorId());
+                return responseGenerator.generateResponse(ResponseCode.DOCTOR_NOT_FOUND, MessageConstant.DOCTOR_NOT_FOUND, null);
             }
 
             TrackAppointmentStatusResponseDTO responseDTO = TrackAppointmentStatusResponseDTO.builder()
@@ -407,13 +335,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .build();
 
             log.info("Tracking info retrieved for: {}", request.getAppointmentReferenceId());
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
-                    MessageConstant.APPOINTMENT_OPERATION_SUCCESS, responseDTO);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, responseDTO);
 
         } catch (Exception e) {
             log.error("Error occurred while tracking appointment status: ", e);
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED,
-                    MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
         }
     }
 
@@ -426,27 +352,23 @@ public class AppointmentServiceImpl implements AppointmentService {
             MedisphereAppointmentEntity appointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
             if (appointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND,
-                        MessageConstant.APPOINTMENT_NOT_FOUND, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
             }
 
             // Check if current status is terminal
             if (Status.CANCELLED.name().equalsIgnoreCase(appointmentEntity.getStatus())) {
                 log.warn("Appointment already cancelled: {}", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_CANCELLED,
-                        MessageConstant.APPOINTMENT_ALREADY_CANCELLED, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_CANCELLED, MessageConstant.APPOINTMENT_ALREADY_CANCELLED, null);
             }
 
             if (Status.REJECTED.name().equalsIgnoreCase(appointmentEntity.getStatus())) {
                 log.warn("Appointment already rejected: {}", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_REJECTED,
-                        MessageConstant.APPOINTMENT_ALREADY_REJECTED, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_REJECTED, MessageConstant.APPOINTMENT_ALREADY_REJECTED, null);
             }
 
             if (Status.APPROVED.name().equalsIgnoreCase(appointmentEntity.getStatus())) {
                 log.warn("Appointment already approved: {}", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_APPROVED,
-                        MessageConstant.APPOINTMENT_ALREADY_APPROVED, null);
+                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_APPROVED, MessageConstant.APPOINTMENT_ALREADY_APPROVED, null);
             }
 
             // Validate and normalize requested status
@@ -460,8 +382,7 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             if (normalizedStatus == null) {
                 log.warn("Invalid status requested: {}", request.getStatus());
-                return responseGenerator.generateResponse(ResponseCode.INVALID_STATUS,
-                        MessageConstant.INVALID_STATUS, null);
+                return responseGenerator.generateResponse(ResponseCode.INVALID_STATUS, MessageConstant.INVALID_STATUS, null);
             }
 
             appointmentRepository.save(appointmentEntity);
@@ -474,16 +395,71 @@ public class AppointmentServiceImpl implements AppointmentService {
                     .build();
 
             log.info("Appointment Status Change success.");
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS,
-                    MessageConstant.APPOINTMENT_OPERATION_SUCCESS, appointmentStatusChangeResponseDTO);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, appointmentStatusChangeResponseDTO);
         } catch (Exception e) {
             log.error("Error occurred while appointment status change: ", e);
-            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED,
-                    MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
+        }
+    }
+
+    @Override
+    public ResponseEntity<Object> getAllAppointmentsByPatientId(AppointmentsByPatientIdRequest patientRequest) {
+        try {
+            log.debug("Get all appointments by patient id Called.");
+
+            // Validate Active Patient Existence
+            getValidatedPatient(patientRequest.getPatientId());
+
+
+
+            AppointmentsByPatientIdResponseDTO responseDTO = new AppointmentsByPatientIdResponseDTO();
+
+            log.info("Get all appointments by patient id success.");
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_SUCCESS, MessageConstant.APPOINTMENT_OPERATION_SUCCESS, responseDTO);
+        } catch (ServiceException e) {
+            return responseGenerator.generateResponse(e.getCode(), e.getDescription(), null);
+        } catch (Exception e) {
+            log.error("Error occurred: ", e);
+            return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_OPERATION_FAILED, MessageConstant.APPOINTMENT_OPERATION_FAILED, null);
         }
     }
 
     private String generateReference() {
         return "MEDSPREF-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
     }
+
+    private PatientClientResponse getValidatedPatient(String patientId) {
+        ResponseEntity<PatientByIdClientResponse> patientByIdClientResponse = medispherePatientClient.getPatientById(patientId);
+        PatientByIdClientResponse patientResponse = patientByIdClientResponse.getBody();
+        PatientClientResponse patientEntity = (patientResponse != null) ? patientResponse.getData() : null;
+
+        log.debug("Patient Retrieved for ID {}: {}", patientId, patientEntity != null ? "Found" : "Not Found");
+        if (patientEntity == null) {
+            log.warn("Patient not found for ID: {}.", patientId);
+            throw new ServiceException(ResponseCode.PATIENTS_NOT_FOUND, MessageConstant.PATIENTS_NOT_FOUND);
+        }
+        if (!Status.active.name().equalsIgnoreCase(patientEntity.getStatus())) {
+            log.warn("Patient ID {} is not active: {}", patientId, patientEntity.getStatus());
+            throw new ServiceException(ResponseCode.PATIENT_NOT_ACTIVE, MessageConstant.PATIENT_NOT_ACTIVE);
+        }
+        return patientEntity;
+    }
+
+    private DoctorClientResponse getValidatedDoctor(String doctorId) {
+        ResponseEntity<DoctorByIdClientResponse> doctorByIdClientResponse = medisphereDoctorClient.getDoctorById(doctorId);
+        DoctorByIdClientResponse doctorResponse = doctorByIdClientResponse.getBody();
+        DoctorClientResponse doctorEntity = (doctorResponse != null) ? doctorResponse.getData() : null;
+
+        log.debug("Doctor Retrieved for ID {}: {}", doctorId, doctorEntity != null ? "Found" : "Not Found");
+        if (doctorEntity == null) {
+            log.warn("Doctor ID {} not found.", doctorId);
+            throw new ServiceException(ResponseCode.DOCTOR_NOT_FOUND, MessageConstant.DOCTOR_NOT_FOUND);
+        }
+        if (!Status.active.name().equalsIgnoreCase(doctorEntity.getStatus())) {
+            log.warn("Doctor ID {} is not active: {}", doctorId, doctorEntity.getStatus());
+            throw new ServiceException(ResponseCode.DOCTOR_NOT_ACTIVE, MessageConstant.DOCTOR_NOT_ACTIVE);
+        }
+        return doctorEntity;
+    }
+
 }

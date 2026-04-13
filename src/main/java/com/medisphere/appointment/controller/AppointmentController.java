@@ -70,4 +70,11 @@ public class AppointmentController {
         return appointmentService.appointmentStatusChange(modelMapper.map(requestDTO, AppointmentStatusChangeRequest.class));
     }
 
+    @GetMapping(value = EndPoint.TRACK_APPOINTMENT_STATUS)
+    public ResponseEntity<Object> getAllAppointmentsByPatientId(@PathVariable("patientId") String patientId) {
+        log.info("Received request to get all appointments by patient id: {}", patientId);
+        AppointmentsByPatientIdRequestDTO requestDTO = AppointmentsByPatientIdRequestDTO.builder().patientId(patientId).build();
+        return appointmentService.getAllAppointmentsByPatientId(modelMapper.map(requestDTO, AppointmentsByPatientIdRequest.class));
+    }
+
 }

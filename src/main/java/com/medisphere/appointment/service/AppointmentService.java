@@ -19,4 +19,6 @@ public interface AppointmentService {
 
     ResponseEntity<Object> appointmentStatusChange(AppointmentStatusChangeRequest request);
 
+    ResponseEntity<Object> getAllAppointmentsByPatientId(AppointmentsByPatientIdRequest request);
+
 }
