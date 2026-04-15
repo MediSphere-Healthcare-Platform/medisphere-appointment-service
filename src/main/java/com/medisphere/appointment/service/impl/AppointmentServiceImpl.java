@@ -376,6 +376,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 return responseGenerator.generateResponse(ResponseCode.INVALID_STATUS, MessageConstant.INVALID_STATUS, null);
             }
 
+            appointmentEntity.setStatus(normalizedStatus);
             appointmentRepository.save(appointmentEntity);
             log.info("Appointment status changed successfully to: {}", normalizedStatus);
 
