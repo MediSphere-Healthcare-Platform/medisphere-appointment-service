@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: appointment-service
+  labels:
+    app: appointment-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appointment-service
+  template:
+    metadata:
+      labels:
+        app: appointment-service
+    spec:
+      containers:
+      - name: appointment-service
+        image: medisphere-appointment-service:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SPRING_DATASOURCE_URL
+          value: "jdbc:postgresql://ep-delicate-mountain-a1q5imc7-pooler.ap-southeast-1.aws.neon.tech:5432/appointment_db?sslmode=require"
+        - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+          value: "http://eureka-server:8761/eureka/"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: appointment-service
+spec:
+  selector:
+    app: appointment-service
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: NodePort
