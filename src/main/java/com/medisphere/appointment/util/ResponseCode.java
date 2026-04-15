@@ -14,6 +14,6 @@ public class ResponseCode {
     public static final String APPOINTMENT_ALREADY_APPROVED = "0010";
     public static final String VALIDATION_ERROR = "0011";
     public static final String APPOINTMENT_ALREADY_CANCELLED = "0011";
-    public static final String APPOINTMENT_ALREADY_REJECTED = "0012";
+    public static final String STATUS_ALREADY_EXISTS = "0012";
     public static final String INVALID_STATUS = "0013";
 }
