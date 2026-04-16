@@ -25,6 +25,10 @@ spec:
           value: "jdbc:postgresql://ep-delicate-mountain-a1q5imc7-pooler.ap-southeast-1.aws.neon.tech:5432/appointment_db?sslmode=require"
         - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
           value: "http://eureka-server:8761/eureka/"
+        - name: SPRING_SECURITY_USER_NAME
+          value: "admin"
+        - name: SPRING_SECURITY_USER_PASSWORD
+          value: "password123"
 ---
 apiVersion: v1
 kind: Service
