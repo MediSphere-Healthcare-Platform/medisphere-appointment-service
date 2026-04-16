@@ -362,6 +362,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                 return responseGenerator.generateResponse(ResponseCode.STATUS_ALREADY_EXISTS, MessageConstant.STATUS_ALREADY_EXISTS, null);
             }
 
+            if(request.getStatus().equalsIgnoreCase(Status.PENDING.name())){
+                log.warn("Status cannot change to pending again: {}", request.getStatus());
+                return responseGenerator.generateResponse(ResponseCode.INVALID_STATUS, MessageConstant.INVALID_STATUS, null);
+            }
+
             // Validate and normalize requested status
             String normalizedStatus = null;
             for (Status s : Status.values()) {
@@ -379,6 +384,17 @@ public class AppointmentServiceImpl implements AppointmentService {
             appointmentEntity.setStatus(normalizedStatus);
             appointmentRepository.save(appointmentEntity);
             log.info("Appointment status changed successfully to: {}", normalizedStatus);
+
+            // Simulation of Notification and Payment Workflow
+            if (Status.APPROVED.name().equalsIgnoreCase(normalizedStatus)) {
+                log.info("====================================================================");
+                log.info("SIMULATED NOTIFICATION (Notification Service is Under Construction)");
+                log.info("Subject: Appointment Approved - Action Required");
+                log.info("To Patient ID: {}", appointmentEntity.getPatientId());
+                log.info("Message: Your appointment ({}) is APPROVED.", appointmentEntity.getAppointmentReferenceId());
+                log.info("Please complete payment at: http://medisphere-gateway/payment/api/v1/initiatePayment");
+                log.info("====================================================================");
+            }
 
             AppointmentStatusChangeResponseDTO appointmentStatusChangeResponseDTO = AppointmentStatusChangeResponseDTO
                     .builder()
