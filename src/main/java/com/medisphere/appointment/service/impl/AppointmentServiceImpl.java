@@ -189,6 +189,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.debug("Appointment Update Method Called");
 
             MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            log.debug("Appointment entity {}:", Utility.objectToJson(medisphereAppointmentEntity));
             if (medisphereAppointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
                 return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
@@ -280,6 +281,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.debug("Appointment Cancel Method Called");
 
             MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            log.debug("Appointment entity {}:", Utility.objectToJson(medisphereAppointmentEntity));
             if (medisphereAppointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
                 return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
@@ -308,6 +310,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.debug("Track Appointment Status Called.");
 
             MedisphereAppointmentEntity medisphereAppointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            log.debug("Appointment entity {}:", Utility.objectToJson(medisphereAppointmentEntity));
             if (medisphereAppointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
                 return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
@@ -347,25 +350,21 @@ public class AppointmentServiceImpl implements AppointmentService {
             log.debug("Appointment Status Change Called.");
 
             MedisphereAppointmentEntity appointmentEntity = appointmentRepository.findByAppointmentReferenceId(request.getAppointmentReferenceId());
+            log.debug("Appointment entity {}:", Utility.objectToJson(appointmentEntity));
             if (appointmentEntity == null) {
                 log.warn("Appointment not found for reference ID: {}.", request.getAppointmentReferenceId());
                 return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_NOT_FOUND, MessageConstant.APPOINTMENT_NOT_FOUND, null);
             }
 
-            // Check if current status is terminal
-            if (Status.CANCELLED.name().equalsIgnoreCase(appointmentEntity.getStatus())) {
-                log.warn("Appointment already cancelled: {}", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_CANCELLED, MessageConstant.APPOINTMENT_ALREADY_CANCELLED, null);
+            // Check if current status exists
+            if (request.getStatus().equalsIgnoreCase(appointmentEntity.getStatus())) {
+                log.warn("Status already exists: {}", request.getStatus());
+                return responseGenerator.generateResponse(ResponseCode.STATUS_ALREADY_EXISTS, MessageConstant.STATUS_ALREADY_EXISTS, null);
             }
 
-            if (Status.REJECTED.name().equalsIgnoreCase(appointmentEntity.getStatus())) {
-                log.warn("Appointment already rejected: {}", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_REJECTED, MessageConstant.APPOINTMENT_ALREADY_REJECTED, null);
-            }
-
-            if (Status.APPROVED.name().equalsIgnoreCase(appointmentEntity.getStatus())) {
-                log.warn("Appointment already approved: {}", request.getAppointmentReferenceId());
-                return responseGenerator.generateResponse(ResponseCode.APPOINTMENT_ALREADY_APPROVED, MessageConstant.APPOINTMENT_ALREADY_APPROVED, null);
+            if(request.getStatus().equalsIgnoreCase(Status.PENDING.name())){
+                log.warn("Status cannot change to pending again: {}", request.getStatus());
+                return responseGenerator.generateResponse(ResponseCode.INVALID_STATUS, MessageConstant.INVALID_STATUS, null);
             }
 
             // Validate and normalize requested status
@@ -382,8 +381,20 @@ public class AppointmentServiceImpl implements AppointmentService {
                 return responseGenerator.generateResponse(ResponseCode.INVALID_STATUS, MessageConstant.INVALID_STATUS, null);
             }
 
+            appointmentEntity.setStatus(normalizedStatus);
             appointmentRepository.save(appointmentEntity);
             log.info("Appointment status changed successfully to: {}", normalizedStatus);
+
+            // Simulation of Notification and Payment Workflow
+            if (Status.APPROVED.name().equalsIgnoreCase(normalizedStatus)) {
+                log.info("====================================================================");
+                log.info("SIMULATED NOTIFICATION (Notification Service is Under Construction)");
+                log.info("Subject: Appointment Approved - Action Required");
+                log.info("To Patient ID: {}", appointmentEntity.getPatientId());
+                log.info("Message: Your appointment ({}) is APPROVED.", appointmentEntity.getAppointmentReferenceId());
+                log.info("Please complete payment at: http://medisphere-gateway/payment/api/v1/initiatePayment");
+                log.info("====================================================================");
+            }
 
             AppointmentStatusChangeResponseDTO appointmentStatusChangeResponseDTO = AppointmentStatusChangeResponseDTO
                     .builder()
