@@ -8,5 +8,6 @@ public enum Status {
     CANCELLED,
     REJECTED,
     Success,
-    Failed
+    Failed,
+    PAID
 }
