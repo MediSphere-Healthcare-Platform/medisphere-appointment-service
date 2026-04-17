@@ -11,9 +11,11 @@ import com.medisphere.appointment.client.response.PatientByIdClientResponse;
 import com.medisphere.appointment.client.response.PatientClientResponse;
 import com.medisphere.appointment.domain.*;
 import com.medisphere.appointment.dto.Response.*;
+import com.medisphere.appointment.entity.CommonUrlEntity;
 import com.medisphere.appointment.entity.MedisphereAppointmentEntity;
 import com.medisphere.appointment.exception.ServiceException;
 import com.medisphere.appointment.repository.AppointmentRepository;
+import com.medisphere.appointment.repository.CommonUrlRepository;
 import com.medisphere.appointment.service.AppointmentService;
 import com.medisphere.appointment.service.ResponseGenerator;
 import com.medisphere.appointment.util.MessageConstant;
@@ -44,9 +46,7 @@ public class AppointmentServiceImpl implements AppointmentService {
     private final MedisphereDoctorClient medisphereDoctorClient;
     private final MedispherePatientClient medispherePatientClient;
     private final MedisphereNotificationClient medisphereNotificationClient;
-
-    @Value("${frontend.base-url:http://localhost:3000}")
-    private String frontendBaseUrl;
+    private final CommonUrlRepository commonUrlRepository;
 
     @Override
     public ResponseEntity<Object> getAllAppointments() {
@@ -435,13 +435,21 @@ public class AppointmentServiceImpl implements AppointmentService {
                 log.info("Sending notification for approved appointment: {}",
                         appointmentEntity.getAppointmentReferenceId());
 
+                String frontendBaseUrl = commonUrlRepository.findByCode("FRONTEND_BASE_URL")
+                        .map(CommonUrlEntity::getUrl)
+                        .orElse("http://localhost:3000");
+
+                String frontendPaymentUrl = commonUrlRepository.findByCode("FRONTEND_PAYMENT_URL")
+                        .map(CommonUrlEntity::getUrl)
+                        .orElse("/payment/initiate");
+
                 NotificationClientRequest notificationClientRequest = NotificationClientRequest.builder()
-                        .userId(appointmentEntity.getPatientId())
+                        .userId(appointmentEntity.getMsUserId())
                         .userRole("PATIENT")
                         .title("Appointment Approved")
                         .message("Your appointment (" + appointmentEntity.getAppointmentReferenceId()
                                 + ") is APPROVED. Please complete the payment at: " + frontendBaseUrl
-                                + "/payment/initiate?appointmentRefId="
+                                + frontendPaymentUrl + "?appointmentRefId="
                                 + appointmentEntity.getAppointmentReferenceId())
                         .channel("EMAIL")
                         .relatedId(appointmentEntity.getAppointmentReferenceId())
