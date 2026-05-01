@@ -9,10 +9,14 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(name = "medisphere-notification-service", fallbackFactory = MedisphereNotificationClientFallbackFactory.class)
+@FeignClient(
+        name = "medisphere-notification-service",
+        url = "${notification.service.url:}",
+        fallbackFactory = MedisphereNotificationClientFallbackFactory.class
+)
 public interface MedisphereNotificationClient {
 
-    @PostMapping("api/v1/notifications/create")
+    @PostMapping("/api/v1/notifications/create")
     ResponseEntity<Object> createNotification(@RequestBody NotificationClientRequest notificationClientRequest);
 }
 

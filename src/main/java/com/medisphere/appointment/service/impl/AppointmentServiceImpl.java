@@ -366,6 +366,8 @@ public class AppointmentServiceImpl implements AppointmentService {
 
             TrackAppointmentStatusResponseDTO responseDTO = TrackAppointmentStatusResponseDTO.builder()
                     .appointmentReferenceId(medisphereAppointmentEntity.getAppointmentReferenceId())
+                    .patientId(medisphereAppointmentEntity.getPatientId())
+                    .doctorId(medisphereAppointmentEntity.getDoctorId())
                     .doctorName(doctorEntity.getFirstName() + " " + doctorEntity.getLastName())
                     .appointmentDate(medisphereAppointmentEntity.getAppointmentDate())
                     .appointmentTime(medisphereAppointmentEntity.getAppointmentTime())

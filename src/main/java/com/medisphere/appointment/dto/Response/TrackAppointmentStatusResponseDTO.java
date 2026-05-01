@@ -16,6 +16,8 @@ public class TrackAppointmentStatusResponseDTO {
 
     private String appointmentReferenceId;
     private String doctorName;
+    private String doctorId;
+    private String patientId;
     private LocalDate appointmentDate;
     private LocalTime appointmentTime;
     private String status;
